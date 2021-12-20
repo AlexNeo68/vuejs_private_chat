@@ -7,7 +7,7 @@
 
           <ul class="list-group">
             <li
-              class="list-group-item"
+              class="list-group-item d-flex justify-content-between align-items-center"
               v-for="(friend, index) in friends"
               :key="`friend-${index}`"
             >
@@ -15,6 +15,10 @@
                 href="#"
                 @click.prevent="openChat(friend)"
               >{{friend.name}}</a>
+              <i
+                class='bx bxs-circle text-success'
+                v-if="friend.online"
+              ></i>
             </li>
           </ul>
         </div>
@@ -48,6 +52,43 @@ export default {
   },
   created() {
     this.getFriends();
+    Echo.channel("Chat").listen("SessionEvent", (e) => {
+      console.log(e);
+      this.friends = this.friends.map((friend) => {
+        if (friend.id == e.session_by) {
+          friend.session = e.session;
+        }
+        return friend;
+      });
+    });
+    Echo.join(`Chat`)
+      .here((users) => {
+        this.friends = this.friends.map((friend) => {
+          users.forEach((user) => {
+            friend.online = user.id == friend.id;
+          });
+          return friend;
+        });
+      })
+      .joining((user) => {
+        this.friends = this.friends.map((friend) => {
+          if (friend.id == user.id) {
+            friend.online = true;
+          }
+          return friend;
+        });
+      })
+      .leaving((user) => {
+        this.friends = this.friends.map((friend) => {
+          if (friend.id == user.id) {
+            friend.online = false;
+          }
+          return friend;
+        });
+      })
+      .error((error) => {
+        console.error(error);
+      });
   },
   methods: {
     async getFriends() {

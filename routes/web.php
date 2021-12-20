@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Friends\FriendController;
 use App\Http\Controllers\Api\Session\SessionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\User\UserController;
+use App\Http\Controllers\ChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,4 +29,5 @@ Route::middleware('auth')->group(function(){
     Route::get('/friends', [FriendController::class, 'index']);
 
     Route::post('/sessions', [SessionController::class, 'store']);
+    Route::post('/send/{session}', [ChatController::class, 'send']);
 });

@@ -5301,6 +5301,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
@@ -5313,11 +5317,49 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     };
   },
   created: function created() {
+    var _this = this;
+
     this.getFriends();
+    Echo.channel("Chat").listen("SessionEvent", function (e) {
+      console.log(e);
+      _this.friends = _this.friends.map(function (friend) {
+        if (friend.id == e.session_by) {
+          friend.session = e.session;
+        }
+
+        return friend;
+      });
+    });
+    Echo.join("Chat").here(function (users) {
+      _this.friends = _this.friends.map(function (friend) {
+        users.forEach(function (user) {
+          friend.online = user.id == friend.id;
+        });
+        return friend;
+      });
+    }).joining(function (user) {
+      _this.friends = _this.friends.map(function (friend) {
+        if (friend.id == user.id) {
+          friend.online = true;
+        }
+
+        return friend;
+      });
+    }).leaving(function (user) {
+      _this.friends = _this.friends.map(function (friend) {
+        if (friend.id == user.id) {
+          friend.online = false;
+        }
+
+        return friend;
+      });
+    }).error(function (error) {
+      console.error(error);
+    });
   },
   methods: {
     getFriends: function getFriends() {
-      var _this = this;
+      var _this2 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
         var res;
@@ -5331,7 +5373,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
               case 3:
                 res = _context.sent;
-                _this.friends = res.data.data;
+                _this2.friends = res.data.data;
                 _context.next = 10;
                 break;
 
@@ -5413,6 +5455,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+//
 //
 //
 //
@@ -5496,12 +5547,50 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       chats: [],
-      blockSession: false
+      blockSession: false,
+      message: ""
     };
   },
   methods: {
     send: function send() {
-      console.log("Yaah");
+      var _this = this;
+
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _this.chats.push({
+                  message: _this.message
+                });
+
+                _context.prev = 1;
+                _context.next = 4;
+                return axios.post("/send/".concat(_this.friend.session.id), {
+                  content: _this.message
+                });
+
+              case 4:
+                _context.next = 9;
+                break;
+
+              case 6:
+                _context.prev = 6;
+                _context.t0 = _context["catch"](1);
+                console.log(_context.t0);
+
+              case 9:
+                _context.prev = 9;
+                _this.message = "";
+                return _context.finish(9);
+
+              case 12:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[1, 6, 9, 12]]);
+      }))();
     },
     clear: function clear() {
       this.chats = [];
@@ -35628,7 +35717,11 @@ var render = function () {
             _vm._l(_vm.friends, function (friend, index) {
               return _c(
                 "li",
-                { key: "friend-" + index, staticClass: "list-group-item" },
+                {
+                  key: "friend-" + index,
+                  staticClass:
+                    "list-group-item d-flex justify-content-between align-items-center",
+                },
                 [
                   _c(
                     "a",
@@ -35643,6 +35736,10 @@ var render = function () {
                     },
                     [_vm._v(_vm._s(friend.name))]
                   ),
+                  _vm._v(" "),
+                  friend.online
+                    ? _c("i", { staticClass: "bx bxs-circle text-success" })
+                    : _vm._e(),
                 ]
               )
             }),
@@ -35811,11 +35908,28 @@ var render = function () {
         [
           _c("div", { staticClass: "form-group" }, [
             _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.message,
+                  expression: "message",
+                },
+              ],
               staticClass: "form-control",
               attrs: {
                 type: "text",
                 disabled: _vm.blockSession,
                 placeholder: "Write your message",
+              },
+              domProps: { value: _vm.message },
+              on: {
+                input: function ($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.message = $event.target.value
+                },
               },
             }),
           ]),

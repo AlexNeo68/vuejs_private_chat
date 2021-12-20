@@ -9,6 +9,8 @@ class Message extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['content'];
+
     public function chats(){
        return $this->hasMany(Chat::class);
     }

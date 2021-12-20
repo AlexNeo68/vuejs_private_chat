@@ -66,6 +66,7 @@
         <div class="form-group">
           <input
             type="text"
+            v-model="message"
             :disabled="blockSession"
             class="form-control"
             placeholder="Write your message"
@@ -79,15 +80,26 @@
 export default {
   name: "MessageComponent",
   props: ["friend"],
+
   data() {
     return {
       chats: [],
       blockSession: false,
+      message: "",
     };
   },
   methods: {
-    send() {
-      console.log("Yaah");
+    async send() {
+      this.chats.push({ message: this.message });
+      try {
+        await axios.post(`/send/${this.friend.session.id}`, {
+          content: this.message,
+        });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.message = "";
+      }
     },
     clear() {
       this.chats = [];
