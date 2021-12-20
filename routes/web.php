@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Friends\FriendController;
+use App\Http\Controllers\Api\Session\SessionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\User\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,3 +23,9 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Route::middleware('auth')->group(function(){
+    Route::get('/friends', [FriendController::class, 'index']);
+
+    Route::post('/sessions', [SessionController::class, 'store']);
+});

@@ -1,18 +1,13 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Friends;
 
 use App\Models\Session;
+use App\Http\Resources\SessionResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class FriendResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
-     */
     public function toArray($request)
     {
         return [

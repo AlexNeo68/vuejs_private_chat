@@ -9,6 +9,10 @@ class Session extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['user1_id', 'user2_id'];
+
+    public $timestamps = false;
+
     public function chats(){
        return $this->hasManyThrough(Chat::class, Message::class);
     }
