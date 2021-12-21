@@ -18,4 +18,20 @@ class Message extends Model
     public function session() {
        return $this->belongsTo(Session::class);
     }
+
+    public function chatForSender($session_id) {
+        return $this->chats()->create([
+            'session_id' => $session_id,
+            'user_id' => auth()->user()->id,
+            'type' => 0
+        ]);
+    }
+
+    public function chatForRecepient($session_id, $user_to) {
+        return $this->chats()->create([
+            'session_id' => $session_id,
+            'user_id' => $user_to,
+            'type' => 1
+        ]);
+    }
 }

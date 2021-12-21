@@ -11,10 +11,17 @@
               v-for="(friend, index) in friends"
               :key="`friend-${index}`"
             >
-              <a
-                href="#"
-                @click.prevent="openChat(friend)"
-              >{{friend.name}}</a>
+              <div>
+                <a
+                  href="#"
+                  @click.prevent="openChat(friend)"
+                >{{friend.name}}</a>
+                <span
+                  class="text-danger ml-2"
+                  v-if="friend.session&&friend.session.unread_chats_count"
+                >({{friend.session.unread_chats_count}})</span>
+              </div>
+
               <i
                 class='bx bxs-circle text-success'
                 v-if="friend.online"
@@ -53,10 +60,10 @@ export default {
   created() {
     this.getFriends();
     Echo.channel("Chat").listen("SessionEvent", (e) => {
-      console.log(e);
       this.friends = this.friends.map((friend) => {
         if (friend.id == e.session_by) {
           friend.session = e.session;
+          this.listenForEverySession(friend);
         }
         return friend;
       });
@@ -91,10 +98,21 @@ export default {
       });
   },
   methods: {
+    listenForEverySession(friend) {
+      Echo.private(`Session.${friend.session.id}`).listen(
+        "PrivateChatEvent",
+        (e) => {
+          !friend.session.open ? friend.session.unread_chats_count++ : "";
+        }
+      );
+    },
     async getFriends() {
       try {
         const res = await axios.get("/friends");
         this.friends = res.data.data;
+        this.friends.forEach((friend) => {
+          friend.session ? this.listenForEverySession(friend) : "";
+        });
       } catch (error) {
         console.log(error);
       }
@@ -108,8 +126,10 @@ export default {
           f.session.open = false;
         }
       });
+
       if (friend.session) {
         friend.session.open = true;
+        friend.session.unread_chats_count = 0;
       } else {
         this.createSession(friend);
       }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Session;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -19,4 +20,8 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('Chat', function ($user) {
     return $user;
+});
+
+Broadcast::channel('Session.{session}', function ($user, Session $session) {
+    return (int) $user->id === (int) $session->user1_id || (int) $user->id === (int) $session->user2_id;
 });

@@ -19,6 +19,7 @@ class CreateChatsTable extends Migration
             $table->unsignedBigInteger('message_id');
             $table->unsignedBigInteger('session_id');
             $table->unsignedBigInteger('user_id');
+            $table->dateTime('read_at')->nullable();
             $table->boolean('type'); // 0 - for send, 1 - for receive
         });
     }

@@ -28,6 +28,12 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::middleware('auth')->group(function(){
     Route::get('/friends', [FriendController::class, 'index']);
 
-    Route::post('/sessions', [SessionController::class, 'store']);
     Route::post('/send/{session}', [ChatController::class, 'send']);
+
+    Route::post('/sessions', [SessionController::class, 'store']);
+    Route::get('/sessions/{session}/chats', [ChatController::class, 'chats']);
+    Route::post('/sessions/{session}/read', [ChatController::class, 'read']);
+    Route::delete('/sessions/{session}/clear', [ChatController::class, 'clear']);
+    Route::post('/sessions/{session}/block', [SessionController::class, 'block']);
+    Route::post('/sessions/{session}/unblock', [SessionController::class, 'unblock']);
 });

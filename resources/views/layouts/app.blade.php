@@ -18,6 +18,10 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+
+    <script>
+        window.authId = {!! auth()->user()->id !!};
+    </script>
 </head>
 <body>
     <div id="app">

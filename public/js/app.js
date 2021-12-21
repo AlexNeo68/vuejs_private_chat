@@ -5305,6 +5305,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   components: {
@@ -5321,10 +5328,11 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
     this.getFriends();
     Echo.channel("Chat").listen("SessionEvent", function (e) {
-      console.log(e);
       _this.friends = _this.friends.map(function (friend) {
         if (friend.id == e.session_by) {
           friend.session = e.session;
+
+          _this.listenForEverySession(friend);
         }
 
         return friend;
@@ -5358,6 +5366,11 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     });
   },
   methods: {
+    listenForEverySession: function listenForEverySession(friend) {
+      Echo["private"]("Session.".concat(friend.session.id)).listen("PrivateChatEvent", function (e) {
+        !friend.session.open ? friend.session.unread_chats_count++ : "";
+      });
+    },
     getFriends: function getFriends() {
       var _this2 = this;
 
@@ -5374,20 +5387,25 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
               case 3:
                 res = _context.sent;
                 _this2.friends = res.data.data;
-                _context.next = 10;
+
+                _this2.friends.forEach(function (friend) {
+                  friend.session ? _this2.listenForEverySession(friend) : "";
+                });
+
+                _context.next = 11;
                 break;
 
-              case 7:
-                _context.prev = 7;
+              case 8:
+                _context.prev = 8;
                 _context.t0 = _context["catch"](0);
                 console.log(_context.t0);
 
-              case 10:
+              case 11:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 7]]);
+        }, _callee, null, [[0, 8]]);
       }))();
     },
     close: function close(friend) {
@@ -5402,6 +5420,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
       if (friend.session) {
         friend.session.open = true;
+        friend.session.unread_chats_count = 0;
       } else {
         this.createSession(friend);
       }
@@ -5541,122 +5560,276 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MessageComponent",
   props: ["friend"],
   data: function data() {
     return {
       chats: [],
-      blockSession: false,
-      message: ""
+      message: "",
+      isTyping: false
     };
+  },
+  computed: {
+    blockSession: function blockSession() {
+      return this.friend.session && this.friend.session.block;
+    },
+    canSessionUnBlock: function canSessionUnBlock() {
+      return authId == this.friend.session.blocked_by;
+    }
   },
   methods: {
     send: function send() {
       var _this = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        var newChat;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _this.chats.push({
-                  message: _this.message
-                });
-
-                _context.prev = 1;
-                _context.next = 4;
+                _context.prev = 0;
+                _context.next = 3;
                 return axios.post("/send/".concat(_this.friend.session.id), {
-                  content: _this.message
+                  content: _this.message,
+                  user_to: _this.friend.id
                 });
 
-              case 4:
-                _context.next = 9;
+              case 3:
+                newChat = _context.sent;
+
+                _this.chats.push(newChat.data.data);
+
+                _context.next = 10;
                 break;
 
-              case 6:
-                _context.prev = 6;
-                _context.t0 = _context["catch"](1);
+              case 7:
+                _context.prev = 7;
+                _context.t0 = _context["catch"](0);
                 console.log(_context.t0);
 
-              case 9:
-                _context.prev = 9;
+              case 10:
+                _context.prev = 10;
                 _this.message = "";
-                return _context.finish(9);
+                return _context.finish(10);
 
-              case 12:
+              case 13:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[1, 6, 9, 12]]);
+        }, _callee, null, [[0, 7, 10, 13]]);
       }))();
     },
     clear: function clear() {
-      this.chats = [];
+      var _this2 = this;
+
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.prev = 0;
+                _context2.next = 3;
+                return axios["delete"]("/sessions/".concat(_this2.friend.session.id, "/clear"));
+
+              case 3:
+                _this2.chats = [];
+                _context2.next = 9;
+                break;
+
+              case 6:
+                _context2.prev = 6;
+                _context2.t0 = _context2["catch"](0);
+                console.log(_context2.t0);
+
+              case 9:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, null, [[0, 6]]);
+      }))();
     },
     block: function block() {
-      this.blockSession = true;
+      var _this3 = this;
+
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                _context3.next = 3;
+                return axios.post("/sessions/".concat(_this3.friend.session.id, "/block"));
+
+              case 3:
+                _this3.friend.session.block = true;
+                _this3.friend.session.blocked_by = authId;
+                _context3.next = 10;
+                break;
+
+              case 7:
+                _context3.prev = 7;
+                _context3.t0 = _context3["catch"](0);
+                console.log(_context3.t0);
+
+              case 10:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[0, 7]]);
+      }))();
     },
     unblock: function unblock() {
-      this.blockSession = false;
+      var _this4 = this;
+
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee4() {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _context4.prev = 0;
+                _context4.next = 3;
+                return axios.post("/sessions/".concat(_this4.friend.session.id, "/unblock"));
+
+              case 3:
+                _this4.friend.session.block = false;
+                _this4.friend.session.blocked_by = null;
+                _context4.next = 10;
+                break;
+
+              case 7:
+                _context4.prev = 7;
+                _context4.t0 = _context4["catch"](0);
+                console.log(_context4.t0);
+
+              case 10:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, null, [[0, 7]]);
+      }))();
+    },
+    getAllMessages: function getAllMessages() {
+      var _this5 = this;
+
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee5() {
+        var res;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.prev = 0;
+                _context5.next = 3;
+                return axios.get("/sessions/".concat(_this5.friend.session.id, "/chats"));
+
+              case 3:
+                res = _context5.sent;
+                _this5.chats = res.data.data;
+                _context5.next = 10;
+                break;
+
+              case 7:
+                _context5.prev = 7;
+                _context5.t0 = _context5["catch"](0);
+                console.log(_context5.t0);
+
+              case 10:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, null, [[0, 7]]);
+      }))();
+    },
+    read: function read() {
+      var _this6 = this;
+
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee6() {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.prev = 0;
+                _context6.next = 3;
+                return axios.post("/sessions/".concat(_this6.friend.session.id, "/read"));
+
+              case 3:
+                _context6.next = 8;
+                break;
+
+              case 5:
+                _context6.prev = 5;
+                _context6.t0 = _context6["catch"](0);
+                console.log(_context6.t0);
+
+              case 8:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, null, [[0, 5]]);
+      }))();
+    }
+  },
+  watch: {
+    message: function message(value) {
+      if (value) {
+        Echo["private"]("Session.".concat(this.friend.session.id)).whisper("typing", {
+          name: "SAnya"
+        });
+      }
     }
   },
   created: function created() {
-    this.chats.push({
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Message"
-    }, {
-      message: "Last Message"
+    var _this7 = this;
+
+    this.read();
+    this.getAllMessages();
+    Echo["private"]("Session.".concat(this.friend.session.id)).listen("PrivateChatEvent", function (e) {
+      _this7.chats.push({
+        id: e.chat.id,
+        message: e.chat.message,
+        type: 1,
+        send_at: e.chat.send_at,
+        read_at: null
+      });
+
+      _this7.read();
+    });
+    Echo["private"]("Session.".concat(this.friend.session.id)).listen("MessageReadEvent", function (e) {
+      _this7.chats = _this7.chats.map(function (chat) {
+        if (chat.id == e.chat.id) {
+          chat.read_at = e.chat.read_at;
+        }
+
+        return chat;
+      });
+    });
+    Echo["private"]("Session.".concat(this.friend.session.id)).listen("SessionBlockEvent", function (e) {
+      _this7.friend.session.block = e.session.block;
+      _this7.friend.session.blocked_by = e.session.blocked_by;
+    });
+    Echo["private"]("Session.".concat(this.friend.session.id)).listenForWhisper("typing", function (e) {
+      _this7.isTyping = true;
+      setTimeout(function () {
+        _this7.isTyping = false;
+      }, 2000);
     });
   }
 });
@@ -35723,19 +35896,31 @@ var render = function () {
                     "list-group-item d-flex justify-content-between align-items-center",
                 },
                 [
-                  _c(
-                    "a",
-                    {
-                      attrs: { href: "#" },
-                      on: {
-                        click: function ($event) {
-                          $event.preventDefault()
-                          return _vm.openChat(friend)
+                  _c("div", [
+                    _c(
+                      "a",
+                      {
+                        attrs: { href: "#" },
+                        on: {
+                          click: function ($event) {
+                            $event.preventDefault()
+                            return _vm.openChat(friend)
+                          },
                         },
                       },
-                    },
-                    [_vm._v(_vm._s(friend.name))]
-                  ),
+                      [_vm._v(_vm._s(friend.name))]
+                    ),
+                    _vm._v(" "),
+                    friend.session && friend.session.unread_chats_count
+                      ? _c("span", { staticClass: "text-danger ml-2" }, [
+                          _vm._v(
+                            "(" +
+                              _vm._s(friend.session.unread_chats_count) +
+                              ")"
+                          ),
+                        ])
+                      : _vm._e(),
+                  ]),
                   _vm._v(" "),
                   friend.online
                     ? _c("i", { staticClass: "bx bxs-circle text-success" })
@@ -35810,8 +35995,10 @@ var render = function () {
           "h3",
           { staticClass: "mb-0", class: { "text-danger": _vm.blockSession } },
           [
-            _vm._v(_vm._s(_vm.friend.name) + " "),
+            _vm._v(_vm._s(_vm.friend.name) + "\n      "),
             _vm.blockSession ? _c("span", [_vm._v("(blocked)")]) : _vm._e(),
+            _vm._v(" "),
+            _vm.isTyping ? _c("span", [_vm._v(" is Typing ...")]) : _vm._e(),
           ]
         ),
         _vm._v(" "),
@@ -35849,7 +36036,8 @@ var render = function () {
                         },
                         [_vm._v("Block")]
                       )
-                    : _c(
+                    : _vm.canSessionUnBlock
+                    ? _c(
                         "a",
                         {
                           staticClass: "dropdown-item",
@@ -35857,7 +36045,8 @@ var render = function () {
                           on: { click: _vm.unblock },
                         },
                         [_vm._v("UnBlock")]
-                      ),
+                      )
+                    : _vm._e(),
                 ]),
               ]
             ),
@@ -35886,7 +36075,27 @@ var render = function () {
       },
       _vm._l(_vm.chats, function (chat, i) {
         return _c("div", { key: "chat-number-" + i }, [
-          _c("div", [_vm._v(_vm._s(chat.message))]),
+          _c(
+            "div",
+            {
+              staticClass: "mb-2",
+              class: {
+                "text-end": chat.type == 0,
+                "text-success": chat.type == 0 && chat.read_at,
+              },
+            },
+            [
+              _c("div", { staticClass: "mb-0" }, [
+                _vm._v(_vm._s(chat.message)),
+              ]),
+              _vm._v(" "),
+              chat.type == 0 && chat.read_at
+                ? _c("small", { staticClass: "fw-lighter lh-1" }, [
+                    _vm._v(_vm._s(chat.read_at)),
+                  ])
+                : _vm._e(),
+            ]
+          ),
         ])
       }),
       0
